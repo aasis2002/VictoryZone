@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "344322307571",
+    "project_id": "victoryzone-1ea5f",
+    "storage_bucket": "victoryzone-1ea5f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344322307571:android:545a8710a897980e8c4e86",
+        "android_client_info": {
+          "package_name": "com.example.victoryzone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "344322307571-5dma8bvel8jjpvifpflef442os5956vg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.victoryzone",
+            "certificate_hash": "46aa197c470bbbd78c657b27ba3b42f31c733575"
+          }
+        },
+        {
+          "client_id": "344322307571-4nqd9vnl47399sac7ui50qtsa3b4epmu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBixc0Er_0QLsaDqb5aSQqIljVy2v4sitk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "344322307571-4nqd9vnl47399sac7ui50qtsa3b4epmu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+
+      match /{allPaths=**} {
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      }
+    }
+
+    // 2. Tournaments, Matches & Config
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      // Tournament Entries
+      match /entries/{entryId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+
+      // Tie-Sheet Matches
+      match /matches/{matchId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+      }
+
+      // 🛡️ Room Information Security
+      match /private/room_info {
+        allow read: if request.auth != null && (
+          isAdmin() ||
+          (get(/databases/$(database)/documents/users/$(request.auth.uid)/my_entries/$(tournamentId)).data.status == 'confirmed' &&
+           resource.data.isReleased == true)
+        );
+        allow write: if isAdmin();
+      }
+    }
+
+    match /config/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 3. Wallet & Withdrawal Requests
+    match /withdrawal_requests/{requestId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
+
+    match /wallet_requests/{requestId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
+
+    // 4. Ledger & Disputes
+    match /transactions/{document} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null;
+    }
+
+    match /disputes/{document} {
+      allow create: if request.auth != null;
+      allow read, write: if isAdmin();
+    }
+
+    match /support_tickets/{document} {
+      allow create: if request.auth != null;
+      allow read, write: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // 5. Teams & Invitations
+    match /teams/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    match /invitations/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
