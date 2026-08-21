@@ -7,6 +7,7 @@ import '../../services/firestore_service.dart';
 import '../../core/theme.dart';
 import 'notification_screen.dart';
 import 'my_teams_screen.dart';
+import 'leaderboard_screen.dart';
 import 'admin_dashboard_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -77,12 +78,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _menuCard('MY TEAMS', Icons.group_rounded, () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamsScreen()));
                   }, const Color(0xFF6366F1)),
+                  _menuCard('LEADERBOARD', Icons.emoji_events_rounded, () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen()));
+                  }, const Color(0xFFF59E0B)),
                   _menuCard('RESULTS', Icons.assignment_turned_in_rounded, () {
                     nav.setIndex(2); // Go to Events tab
                   }, const Color(0xFF10B981)),
                   _menuCard('WALLET', Icons.account_balance_wallet_rounded, () {
                     nav.setIndex(3); // Go to Wallet tab
-                  }, const Color(0xFFF59E0B)),
+                  }, const Color(0xFF8B5CF6)),
                   _menuCard('STATISTICS', Icons.bar_chart_rounded, () {
                     nav.setIndex(4); // Go to Profile for stats
                   }, const Color(0xFFEC4899)),

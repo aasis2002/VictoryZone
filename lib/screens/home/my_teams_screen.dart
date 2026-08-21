@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/team_provider.dart';
 import '../../services/firestore_service.dart';
@@ -36,6 +37,7 @@ class MyTeamsScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => _showCreateTeamDialog(context, auth.userModel!.uid, teamProvider),
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(200, 50)),
                     child: const Text('Create New Team'),
                   ),
                 ],
@@ -45,53 +47,63 @@ class MyTeamsScreen extends StatelessWidget {
 
           final list = snapshot.data!;
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: list.length,
-            itemBuilder: (context, index) {
-              final team = list[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => TeamProfileScreen(teamId: team.id)));
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: Responsive.isMobile(context) ? 1 : (Responsive.isTablet(context) ? 2 : 3),
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  mainAxisExtent: 140,
+                ),
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  final team = list[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => TeamProfileScreen(teamId: team.id)));
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CircleAvatar(
-                            radius: 25,
-                            backgroundColor: const Color(0xFF6E00FF).withValues(alpha: 0.1),
-                            backgroundImage: team.logoUrl != null ? NetworkImage(team.logoUrl!) : null,
-                            child: team.logoUrl == null ? const Icon(Icons.group, color: Color(0xFF6E00FF)) : null,
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 25,
+                                backgroundColor: const Color(0xFF6E00FF).withValues(alpha: 0.1),
+                                backgroundImage: team.logoUrl != null ? NetworkImage(team.logoUrl!) : null,
+                                child: team.logoUrl == null ? const Icon(Icons.group, color: Color(0xFF6E00FF)) : null,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(team.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
+                                    Text(team.gameType, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(team.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                                Text(team.gameType, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+                          const SizedBox(height: 16),
+                          Text('${team.memberIds.length} Members', style: const TextStyle(color: Colors.white54, fontSize: 13)),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Text('${team.memberIds.length} Members', style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                    ],
-                  ),
-                ),
-              );
-            },
+                    ),
+                  );
+                },
+              ),
+            ),
           );
         },
       ),

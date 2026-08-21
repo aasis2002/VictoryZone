@@ -622,14 +622,55 @@ class FirestoreService {
   }
 
   Future<List<UserModel>> searchUsers(String query) async {
-    // Basic search on name or email
+    if (query.isEmpty) {
+      // Return a few recent users if query is empty
+      var snapshot = await _db.collection(AppConstants.usersColl)
+          .limit(10)
+          .get();
+      return snapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList();
+    }
+
+    // Try multiple search strategies since Firestore is case-sensitive
+    final List<UserModel> users = [];
+    final Set<String> ids = {};
+
+    void addUnique(List<UserModel> newUsers) {
+      for (var u in newUsers) {
+        if (ids.add(u.uid)) users.add(u);
+      }
+    }
+
+    // 1. Exact case as typed
     var snapshot = await _db.collection(AppConstants.usersColl)
         .where('name', isGreaterThanOrEqualTo: query)
         .where('name', isLessThanOrEqualTo: '$query\uf8ff')
         .limit(10)
         .get();
-    
-    return snapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList();
+    addUnique(snapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList());
+
+    // 2. Try with Capitalized First Letter
+    if (users.length < 5 && query.length > 1) {
+      String capitalizedQuery = query[0].toUpperCase() + query.substring(1).toLowerCase();
+      var capSnapshot = await _db.collection(AppConstants.usersColl)
+          .where('name', isGreaterThanOrEqualTo: capitalizedQuery)
+          .where('name', isLessThanOrEqualTo: '$capitalizedQuery\uf8ff')
+          .limit(10)
+          .get();
+      addUnique(capSnapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList());
+    }
+
+    // 3. Try with all lowercase (for users who might have stored their names in lowercase)
+    if (users.length < 5 && query.toLowerCase() != query) {
+      String lowerQuery = query.toLowerCase();
+      var lowerSnapshot = await _db.collection(AppConstants.usersColl)
+          .where('name', isGreaterThanOrEqualTo: lowerQuery)
+          .where('name', isLessThanOrEqualTo: '$lowerQuery\uf8ff')
+          .limit(10)
+          .get();
+      addUnique(lowerSnapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList());
+    }
+
+    return users;
   }
 
   Stream<TeamModel?> getTeamStream(String teamId) {
@@ -993,6 +1034,16 @@ class FirestoreService {
       'totalPrizeMoney': totalPrizePool,
       'totalRegistrations': entries.size,
     };
+  }
+
+  Stream<List<UserModel>> getGlobalLeaderboard() {
+    return _db.collection(AppConstants.usersColl)
+        .orderBy('totalWon', descending: true)
+        .limit(20)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => UserModel.fromMap(doc.data()))
+            .toList());
   }
 
   Stream<double> getTotalWinnings(String userId) {

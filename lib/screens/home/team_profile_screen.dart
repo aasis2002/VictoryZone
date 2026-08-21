@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive.dart';
 import '../../models/team_model.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -39,91 +40,109 @@ class TeamProfileScreen extends StatelessWidget {
                 ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: const Color(0xFF1E293B),
-                        backgroundImage: team.logoUrl != null ? NetworkImage(team.logoUrl!) : null,
-                        child: team.logoUrl == null ? const Icon(Icons.group, size: 50, color: Colors.white24) : null,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(team.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text(team.gameType, style: const TextStyle(color: Color(0xFF6E00FF), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 48),
-                _sectionTitle('Members (${team.memberIds.length})'),
-                const SizedBox(height: 16),
-                FutureBuilder<List<UserModel>>(
-                  future: firestore.getTeamMembers(team.memberIds),
-                  builder: (context, memSnapshot) {
-                    if (!memSnapshot.hasData) return const CircularProgressIndicator();
-                    final members = memSnapshot.data!;
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: members.length,
-                      itemBuilder: (context, index) {
-                        final member = members[index];
-                        final isMemberLeader = team.leaderId == member.uid;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.white10,
-                              backgroundImage: member.photoUrl != null ? NetworkImage(member.photoUrl!) : null,
-                              child: member.photoUrl == null ? const Icon(Icons.person, color: Colors.white24) : null,
-                            ),
-                            title: Text(member.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            subtitle: Text(isMemberLeader ? 'Captain' : 'Member', style: TextStyle(color: isMemberLeader ? const Color(0xFF00E5FF) : Colors.white54, fontSize: 12)),
-                            trailing: isLeader && !isMemberLeader ? PopupMenuButton(
-                              icon: const Icon(Icons.more_vert, color: Colors.white54),
-                              itemBuilder: (ctx) => [
-                                const PopupMenuItem(value: 'remove', child: Text('Remove Member')),
-                                const PopupMenuItem(value: 'transfer', child: Text('Make Captain')),
-                              ],
-                              onSelected: (val) {
-                                if (val == 'remove') teamProvider.removeMember(teamId, member.uid);
-                                if (val == 'transfer') teamProvider.transferCaptain(teamId, member.uid);
-                              },
-                            ) : null,
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: const Color(0xFF1E293B),
+                            backgroundImage: team.logoUrl != null ? NetworkImage(team.logoUrl!) : null,
+                            child: team.logoUrl == null ? const Icon(Icons.group, size: 50, color: Colors.white24) : null,
                           ),
+                          const SizedBox(height: 16),
+                          Text(team.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text(team.gameType, style: const TextStyle(color: Color(0xFF6E00FF), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    _sectionTitle('Members (${team.memberIds.length})'),
+                    const SizedBox(height: 16),
+                    FutureBuilder<List<UserModel>>(
+                      future: firestore.getTeamMembers(team.memberIds),
+                      builder: (context, memSnapshot) {
+                        if (!memSnapshot.hasData) return const CircularProgressIndicator();
+                        final members = memSnapshot.data!;
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: Responsive.isMobile(context) ? 1 : (Responsive.isTablet(context) ? 2 : 3),
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 12,
+                            mainAxisExtent: 80,
+                          ),
+                          itemCount: members.length,
+                          itemBuilder: (context, index) {
+                            final member = members[index];
+                            final isMemberLeader = team.leaderId == member.uid;
+                            return Container(
+                              decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16)),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.white10,
+                                  backgroundImage: member.photoUrl != null ? NetworkImage(member.photoUrl!) : null,
+                                  child: member.photoUrl == null ? const Icon(Icons.person, color: Colors.white24) : null,
+                                ),
+                                title: Text(member.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis),
+                                subtitle: Text(isMemberLeader ? 'Captain' : 'Member', style: TextStyle(color: isMemberLeader ? const Color(0xFF00E5FF) : Colors.white54, fontSize: 12)),
+                                trailing: isLeader && !isMemberLeader ? PopupMenuButton(
+                                  icon: const Icon(Icons.more_vert, color: Colors.white54),
+                                  itemBuilder: (ctx) => [
+                                    const PopupMenuItem(value: 'remove', child: Text('Remove Member')),
+                                    const PopupMenuItem(value: 'transfer', child: Text('Make Captain')),
+                                  ],
+                                  onSelected: (val) {
+                                    if (val == 'remove') teamProvider.removeMember(teamId, member.uid);
+                                    if (val == 'transfer') teamProvider.transferCaptain(teamId, member.uid);
+                                  },
+                                ) : null,
+                              ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        if (isLeader)
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => InvitePlayerScreen(team: team)));
+                              },
+                              icon: const Icon(Icons.person_add_rounded),
+                              label: const Text('Invite Players'),
+                            ),
+                          ),
+                        if (isLeader) const SizedBox(width: 16),
+                        if (!isLeader)
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                await teamProvider.leaveTeam(teamId, auth.userModel!.uid);
+                                if (!context.mounted) return;
+                                Navigator.pop(context);
+                              },
+                              icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                              label: const Text('Leave Team', style: TextStyle(color: Colors.redAccent)),
+                              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.redAccent)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
-                if (isLeader)
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => InvitePlayerScreen(team: team)));
-                    },
-                    icon: const Icon(Icons.person_add_rounded),
-                    label: const Text('Invite Players'),
-                  ),
-                const SizedBox(height: 16),
-                if (!isLeader)
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await teamProvider.leaveTeam(teamId, auth.userModel!.uid);
-                      if (!context.mounted) return;
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                    label: const Text('Leave Team', style: TextStyle(color: Colors.redAccent)),
-                    style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.redAccent)),
-                  ),
-              ],
+              ),
             ),
           ),
         );
